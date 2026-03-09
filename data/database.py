@@ -9,6 +9,15 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from dotenv import load_dotenv
 
+# TODO: Need to add history table to track spending by categories on a monthly basis
+#   Probably not great practice, but should sum transactions by month and category from the transactions table
+#   and will manually add history for last six months
+#   This table will be used for budget predictions for future months; might be able to remove it once I have 6
+#   months of transaction data in the DB
+
+# TODO: Need to look into way to keep backup of data - probably don't want to push data to Github, so
+#   need to figure out another way to back up SQLite DB 
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
