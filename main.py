@@ -109,9 +109,13 @@ async def upload_csv_files(files: list[UploadFile] = File(...)):
                 
                 # Create a file-like object from the contents for parser
                 file_obj = io.BytesIO(contents)
+
+                filename = file.filename.lower()
+                source = "chase" if "chase" in filename else "generic"
+                account = filename[filename.find(source)+1:filename.find("_")] if source == "chase" else "unknown"
                 
                 # Parse CSV using parser.py (auto-detect format)
-                transactions = parse_csv(file_obj)
+                transactions = parse_csv(file_obj, source=source, account=account)
                 
                 # Insert into database (insert_transactions handles categorization)
                 result = insert_transactions(transactions)

@@ -65,6 +65,7 @@ async function uploadFiles() {
     for (let file of files) {
         formData.append('files', file);
     }
+    console.log(formData.getAll('files'));
 
     try {
         const response = await fetch('/upload', {
@@ -73,12 +74,13 @@ async function uploadFiles() {
         });
 
         const data = await response.json();
+        console.log('Upload response:', data);
 
         uploadResults.innerHTML = '';
         let hasSuccess = false;
 
         if (response.ok) {
-            files.forEach((file, i) => {
+            Array.from(files).forEach((file, i) => {
                 let resultDiv = document.createElement('div');
                 resultDiv.className = 'file-result success';
                 resultDiv.innerHTML = `
@@ -184,6 +186,9 @@ async function loadTransactions() {
     const month = monthSelect.value;
     const category = categorySelect.value;
 
+    console.log('monthSelect.value:', month);
+    console.log('categorySelect.value:', category);
+
     if (!month) return;
 
     try {
@@ -191,7 +196,12 @@ async function loadTransactions() {
         if (category) params.append('category', category);
 
         const response = await fetch(`/transactions?${params}`);
-        const transactions = await response.json();
+        const data = await response.json();
+        const transactions = data.transactions || data;
+
+        console.log("transactions response:", data);
+        console.log("type:", typeof data);
+        console.log("is array:", Array.isArray(data));
 
         if (transactions.length === 0) {
             tableBody.innerHTML = `

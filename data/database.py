@@ -253,7 +253,7 @@ def insert_transactions(transactions: list[dict]) -> dict:
     categorization_failures = 0
     
     try:
-        for trans in transactions:
+        for trans in transactions:            
             # Generate import_id for deduplication
             import_id = generate_import_id(trans['transactionDate'], trans['description'], trans['amount'])
             

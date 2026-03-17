@@ -34,7 +34,7 @@ def clean_merchant_name(description: str) -> str:
     return cleaned
 
 
-def parse_chase_csv(file_input: Union[str, object]) -> List[Dict]:
+def parse_chase_csv(file_input: Union[str, object], account: str) -> List[Dict]:
     """
     Parse Chase CSV format.
     
@@ -55,12 +55,12 @@ def parse_chase_csv(file_input: Union[str, object]) -> List[Dict]:
         df = pd.read_csv(file_input)
     except Exception as e:
         raise ValueError(f"Failed to read CSV file: {str(e)}")
-    
+        
     # Normalize column names (strip whitespace)
     df.columns = df.columns.str.strip()
     
     # Check for required columns
-    required_cols = ['Transaction Date', 'Description', 'Amount']
+    required_cols = ['Transaction Date', 'Description', 'Amount', 'Post Date', 'Type']
     found_cols = set(df.columns)
     missing_cols = [col for col in required_cols if col not in found_cols]
     
@@ -76,7 +76,7 @@ def parse_chase_csv(file_input: Union[str, object]) -> List[Dict]:
         if col.lower() in ['category', 'merchant category', 'type']:
             category_col = col
             break
-    
+        
     transactions = []
     
     for _, row in df.iterrows():
@@ -85,12 +85,24 @@ def parse_chase_csv(file_input: Union[str, object]) -> List[Dict]:
             trans_date = pd.to_datetime(row['Transaction Date']).date()
         except Exception:
             continue  # Skip rows with invalid dates
-        
-        # Get amount and flip sign (Chase uses negative for expenses)
+
+        # Parse post date
         try:
-            amount = float(row['Amount']) * -1
+            post_date = pd.to_datetime(row['Post Date']).date()
+        except Exception:
+            continue  # Skip rows with invalid post dates
+
+        # Get amount
+        try:
+            amount = float(row['Amount'])
         except (ValueError, TypeError):
             continue  # Skip rows with invalid amounts
+
+        # Get type
+        try:
+            type = str(row['Type']).strip().lower()
+        except Exception:
+            continue  # Skip rows with invalid type        
         
         # Clean merchant name
         raw_desc = str(row['Description']).strip()
@@ -104,12 +116,15 @@ def parse_chase_csv(file_input: Union[str, object]) -> List[Dict]:
                 csv_category = None
         
         transactions.append({
-            'date': trans_date,
+            'transactionDate': trans_date,
+            'postDate': post_date,
             'merchant': merchant,
             'amount': amount,
-            'raw_description': raw_desc,
+            'description': raw_desc,
             'source': 'chase',
-            'csv_category': csv_category
+            'csv_category': csv_category,
+            'type': type,
+            'account': account
         })
     
     return transactions
@@ -240,17 +255,18 @@ def parse_generic_csv(file_input: Union[str, object]) -> List[Dict]:
     return transactions
 
 
-def parse_csv(file_input: Union[str, object], source: str = "auto") -> List[Dict]:
+def parse_csv(file_input: Union[str, object], source: str = "auto", account: str = "unknown") -> List[Dict]:
     """
     Parse CSV file with automatic format detection or specified source.
     
     Args:
         file_input: File path (str) or file-like object
         source: One of "chase", "generic", or "auto" for automatic detection
+        account: Last 4 digits of account number
     
     Returns:
         List of transaction dicts with keys:
-        date, merchant, amount, raw_description, source
+        date, merchant, amount, raw_description, source, account
     
     Raises:
         ValueError: If parsing fails or required columns not found
@@ -258,7 +274,7 @@ def parse_csv(file_input: Union[str, object], source: str = "auto") -> List[Dict
     source = source.lower().strip()
     
     if source == "chase":
-        return parse_chase_csv(file_input)
+        return parse_chase_csv(file_input, account)
     elif source == "generic":
         return parse_generic_csv(file_input)
     elif source == "auto":
