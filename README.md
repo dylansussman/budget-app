@@ -1,3 +1,16 @@
+# TODOS
+
+- Still need to go through uploaded Capital One transactions to categorize manually
+   - Make sure to update key words & category mapping tables for Capital One transactions
+   - Ensure intial impl of capital one working
+- Integrate with Google Sheets
+- Upload 6 months of transaction hearing, ensuring correct categorization
+   - Use this to calculate spending predictions for each category for the next month
+- Look into form of backuping DB data
+   - Likely think keeping a copy of the DB file in Drive would be easiest
+   - Would just need to manually backup every month
+   - Shouldn't push to GitHub since project is public
+
 # Budget App
 
 A locally-hosted web application for personal budget management. Upload transaction CSVs, automatically categorize spending, view monthly summaries, and sync to Google Sheets.
