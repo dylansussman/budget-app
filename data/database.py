@@ -214,6 +214,25 @@ def init_db():
         session.close()
 
 
+def get_transaction_months() -> list:
+    """
+    Get distinct months that have transactions.
+    
+    Returns:
+        List of month strings in YYYY-MM format, ordered most recent first
+    """
+    session = SessionLocal()
+    try:
+        rows = session.query(
+            func.strftime('%Y-%m', Transaction.transactionDate).label('month')
+        ).distinct().order_by(
+            func.strftime('%Y-%m', Transaction.transactionDate).desc()
+        ).all()
+        
+        return [row.month for row in rows]
+    finally:
+        session.close()
+
 def insert_transactions(transactions: list[dict]) -> dict:
     """
     Insert transactions into database, skipping duplicates based on import_id.
@@ -332,9 +351,23 @@ def get_transactions(month: str, category: str = None, source: str = None) -> li
             query = query.filter(Transaction.source == source)
         
         # Sort by date descending
-        query = query.order_by(Transaction.transactionDate.desc())
+        transactions = query.order_by(Transaction.transactionDate.desc())
         
-        return query.all()
+        # Convert to dict format, resolving category_id to category name
+        return [
+            {
+                "id": t.id,
+                "transactionDate": t.transactionDate.isoformat(),
+                "postDate": t.postDate.isoformat(),
+                "amount": t.amount,
+                "category": t.category.name if t.category else "Unknown",
+                "source": t.source,
+                "account": t.account,
+                "description": t.description,
+                "created_at": t.created_at.isoformat() if t.created_at else None
+            }
+            for t in transactions
+        ]
     finally:
         session.close()
 

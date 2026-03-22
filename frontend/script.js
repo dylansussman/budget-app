@@ -119,14 +119,27 @@ const monthSelect = document.getElementById('monthSelect');
 
 async function loadMonths() {
     try {
-        // Get current month as default
         const now = new Date();
         const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-        // Try to fetch transactions for current month to populate available months
-        // For now, just set current month
-        monthSelect.innerHTML = `<option value="${currentMonth}">${currentMonth}</option>`;
-        monthSelect.value = currentMonth;
+        // Fetch distinct months from the backend
+        const response = await fetch('/api/transactions/months');
+        if (!response.ok) throw new Error('Failed to fetch months');
+        const months = await response.json();
+
+        // Ensure current month is always included even if no transactions yet
+        if (!months.includes(currentMonth)) {
+            months.unshift(currentMonth);
+        }
+
+        // Populate the dropdown
+        monthSelect.innerHTML = months
+            .map(m => `<option value="${m}">${m}</option>`)
+            .join('');
+
+        // Default to current month if present, otherwise most recent
+        monthSelect.value = months.includes(currentMonth) ? currentMonth : months[0];
+
         loadTransactions();
         loadSummary();
         syncBtn.disabled = false;
@@ -217,7 +230,7 @@ async function loadTransactions() {
         tableBody.innerHTML = transactions.map(t => `
             <tr class="category-${t.category}">
                 <td>${t.date}</td>
-                <td>${t.merchant}</td>
+                <td>${t.description}</td>
                 <td>$${Math.abs(t.amount).toFixed(2)}</td>
                 <td>
                     <select class="category-select" data-id="${t.id}" data-current="${t.category}">

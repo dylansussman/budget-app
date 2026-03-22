@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 
 # Import database functions and models
 from data.database import (
-    Transaction, init_db, insert_transactions, get_transactions, 
+    Transaction, init_db, insert_transactions, get_transactions, get_transaction_months,
     update_category, get_monthly_summary, SessionLocal, Category, Keyword, CSVCategoryMap
 )
 
@@ -78,6 +78,10 @@ class CategoriesUpdateRequest(BaseModel):
 # ============================================================================
 # API Routes
 # ============================================================================
+
+@app.get("/api/transactions/months")
+def transaction_months():
+    return get_transaction_months()
 
 @app.post("/upload")
 async def upload_csv_files(files: list[UploadFile] = File(...)):
@@ -162,23 +166,8 @@ async def get_all_transactions(
             raise HTTPException(status_code=400, detail="month parameter is required")
         
         transactions = get_transactions(month, category, source)
-        
-        # Convert to dict format, resolving category_id to category name
-        return [
-            {
-                "id": t.id,
-                "date": t.transactionDate.isoformat(),
-                "merchant": t.description,
-                "amount": t.amount,
-                "category": t.category.name if t.category else "Unknown",
-                "source": t.source,
-                "account": t.account,
-                "raw_description": t.description,
-                "created_at": t.created_at.isoformat() if t.created_at else None
-            }
-            for t in transactions
-        ]
-    
+        return transactions
+
     except HTTPException:
         raise
     except Exception as e:
@@ -246,22 +235,8 @@ async def sync_to_sheets(request: SyncRequest):
         if not transactions:
             raise HTTPException(status_code=400, detail=f"No transactions found for {request.month}")
         
-        # Convert to dict format for sheets_sync
-        txn_dicts = [
-            {
-                "date": t.date.isoformat(),
-                "merchant": t.merchant,
-                "amount": t.amount,
-                "category": t.category,
-                "source": t.source,
-                "account": t.account,
-                "raw_description": t.raw_description
-            }
-            for t in transactions
-        ]
-        
         # Sync to Google Sheets
-        result = sync_month(request.month, txn_dicts)
+        result = sync_month(request.month, transactions)
         return result
     
     except HTTPException:
