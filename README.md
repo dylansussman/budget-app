@@ -1,10 +1,9 @@
 # TODOS
 - Upload 6 months of transaction hearing, ensuring correct categorization
    - Use this to calculate spending predictions for each category for the next month
-- Look into form of backuping DB data
-   - Likely think keeping a copy of the DB file in Drive would be easiest
-   - Would just need to manually backup every month
-   - Shouldn't push to GitHub since project is public
+- Add functionality for pushing rolling 6 month average/category to Google Sheets
+   - Use suggestions & code from Claude
+- Ensure functionality to change transaction category from UI working bug free
 
 # Budget App
 
