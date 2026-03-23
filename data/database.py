@@ -9,14 +9,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from dotenv import load_dotenv
 
-# TODO: Need to add history table to track spending by categories on a monthly basis
-#   Probably not great practice, but should sum transactions by month and category from the transactions table
-#   and will manually add history for last six months
-#   This table will be used for budget predictions for future months; might be able to remove it once I have 6
-#   months of transaction data in the DB
-
-# TODO: Need to look into way to keep backup of data - probably don't want to push data to Github, so
-#   need to figure out another way to back up SQLite DB 
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -222,6 +214,25 @@ def init_db():
         session.close()
 
 
+def get_transaction_months() -> list:
+    """
+    Get distinct months that have transactions.
+    
+    Returns:
+        List of month strings in YYYY-MM format, ordered most recent first
+    """
+    session = SessionLocal()
+    try:
+        rows = session.query(
+            func.strftime('%Y-%m', Transaction.transactionDate).label('month')
+        ).distinct().order_by(
+            func.strftime('%Y-%m', Transaction.transactionDate).desc()
+        ).all()
+        
+        return [row.month for row in rows]
+    finally:
+        session.close()
+
 def insert_transactions(transactions: list[dict]) -> dict:
     """
     Insert transactions into database, skipping duplicates based on import_id.
@@ -340,9 +351,23 @@ def get_transactions(month: str, category: str = None, source: str = None) -> li
             query = query.filter(Transaction.source == source)
         
         # Sort by date descending
-        query = query.order_by(Transaction.transactionDate.desc())
+        transactions = query.order_by(Transaction.transactionDate.desc())
         
-        return query.all()
+        # Convert to dict format, resolving category_id to category name
+        return [
+            {
+                "id": t.id,
+                "transactionDate": t.transactionDate.isoformat(),
+                "postDate": t.postDate.isoformat(),
+                "amount": t.amount,
+                "category": t.category.name if t.category else "Unknown",
+                "source": t.source,
+                "account": t.account,
+                "description": t.description,
+                "created_at": t.created_at.isoformat() if t.created_at else None
+            }
+            for t in transactions
+        ]
     finally:
         session.close()
 
