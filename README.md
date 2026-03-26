@@ -1,7 +1,6 @@
 # TODOS
-- Finish Categorizing December 2025 transactions
-- Upload 6 months of transaction hearing, ensuring correct categorization
-   - Use this to calculate spending predictions for each category for the next month
+- Add Sept & August 2025 transactions
+- Calculate spending predictions for each category for the next month
 - Add functionality for pushing rolling 6 month average/category to Google Sheets
    - Use suggestions & code from Claude
 - Add functionality to parse venmo transactions

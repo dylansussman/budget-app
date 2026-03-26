@@ -231,7 +231,7 @@ async function loadTransactions() {
             <tr class="category-${t.category}">
                 <td>${t.transactionDate}</td>
                 <td>${t.description}</td>
-                <td>$${Math.abs(t.amount).toFixed(2)}</td>
+                <td>${t.amount < 0 ? '($' : '$'}${Math.abs(t.amount).toFixed(2)}${t.amount < 0 ? ')' : ''}</td>
                 <td>
                     <select class="category-select" data-id="${t.id}" data-current="${t.category}">
                         ${generateCategoryOptions(t.category)}
