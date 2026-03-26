@@ -229,7 +229,7 @@ async function loadTransactions() {
 
         tableBody.innerHTML = transactions.map(t => `
             <tr class="category-${t.category}">
-                <td>${t.date}</td>
+                <td>${t.transactionDate}</td>
                 <td>${t.description}</td>
                 <td>$${Math.abs(t.amount).toFixed(2)}</td>
                 <td>
