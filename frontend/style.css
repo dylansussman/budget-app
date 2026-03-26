@@ -247,28 +247,6 @@ tbody tr:hover {
     display: inline-block;
 }
 
-.category-Groceries { background: #fef3c7; color: #92400e; }
-.category-Dining { background: #fecaca; color: #7c2d12; }
-.category-Gas { background: #fed7aa; color: #7c2d12; }
-.category-Utilities { background: #bfdbfe; color: #1e3a8a; }
-.category-Shopping { background: #c7d2fe; color: #312e81; }
-.category-Travel { background: #ddd6fe; color: #4c1d95; }
-.category-Health { background: #e0e7ff; color: #3730a3; }
-.category-Entertainment { background: #f0fdfa; color: #134e4a; }
-.category-Income { background: #dcfce7; color: #15803d; }
-.category-Other { background: #f3f4f6; color: #374151; }
-
-tbody tr.category-Groceries { background: #fffbeb; }
-tbody tr.category-Dining { background: #fff7ed; }
-tbody tr.category-Gas { background: #fef9f3; }
-tbody tr.category-Utilities { background: #f0f9ff; }
-tbody tr.category-Shopping { background: #f5f3ff; }
-tbody tr.category-Travel { background: #faf5ff; }
-tbody tr.category-Health { background: #f8f5ff; }
-tbody tr.category-Entertainment { background: #f0fdf9; }
-tbody tr.category-Income { background: #f0fdf4; }
-tbody tr.category-Other { background: #f9fafb; }
-
 /* Category select in table */
 .category-select {
     padding: 0.25rem 0.5rem;
