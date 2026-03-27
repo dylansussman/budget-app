@@ -288,11 +288,11 @@ def parse_venmo_csv(file_input: Union[str, object]) -> List[Dict]:
         # Get amount
         amount = None
         try:
-            amount_str = str(row['Amount (total)']).strip()
+            amount_str = str(row['Amount (total)']).strip().replace('$', '').replace(',', '')
             if (amount_str.startswith('(') and amount_str.endswith(')')):
-                amount = float(amount_str[2:-1]) * -1  # Negative amount
+                amount = float(amount_str[1:-1]) * -1  # Negative amount
             else:
-                amount = float(amount_str[1:])
+                amount = float(amount_str)
         except (ValueError, TypeError):
             continue  # Skip rows with invalid amounts
 
