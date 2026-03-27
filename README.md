@@ -1,5 +1,5 @@
 # TODOS
-- Add functionality to parse venmo transactions
+- Upload Oct, Sep, Aug Venmo transactions
 - Add other types of transactions to DB (Zelle, transfers, ATM, etc.)
 - Calculate spending predictions for each category for the next month
 - Add functionality for pushing rolling 6 month average/category to Google Sheets
