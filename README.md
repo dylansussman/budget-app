@@ -1,9 +1,8 @@
 # TODOS
-- Add Sept & August 2025 transactions
+- Add functionality to parse venmo transactions
 - Calculate spending predictions for each category for the next month
 - Add functionality for pushing rolling 6 month average/category to Google Sheets
    - Use suggestions & code from Claude
-- Add functionality to parse venmo transactions
 - Ensure functionality to change transaction category from UI working bug free
 
 # Budget App
