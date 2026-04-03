@@ -1,14 +1,13 @@
 # TODOS
-- Upload Aug Venmo transactions
 - Add following functionality to transaction table
    - Add/remove transactions via UI
    - Ability to sort/filter columns
 - Add other types of transactions to DB (Zelle, transfers, ATM, etc.)
 - Double check that all transaction history (per month) matches spreadsheet (spending by category in 2025 & 2026)
 - Calculate spending predictions for each category for the next month
+- Have monthly summary update reload automatically (not only on month change or page reload)
 - Add functionality for pushing rolling 6 month average/category to Google Sheets
    - Use suggestions & code from Claude
-- Ensure functionality to change transaction category from UI working bug free
 
 # Budget App
 
