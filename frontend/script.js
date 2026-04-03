@@ -219,7 +219,7 @@ async function loadTransactions() {
         if (transactions.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="5" class="empty-state">
+                    <td colspan="6" class="empty-state">
                         <p>No transactions found for this month.</p>
                     </td>
                 </tr>
@@ -230,6 +230,7 @@ async function loadTransactions() {
         tableBody.innerHTML = transactions.map(t => `
             <tr class="category-${t.category}">
                 <td>${t.transactionDate}</td>
+                <td>${t.postDate}</td>
                 <td>${t.description}</td>
                 <td>${t.amount < 0 ? '($' : '$'}${Math.abs(t.amount).toFixed(2)}${t.amount < 0 ? ')' : ''}</td>
                 <td>
