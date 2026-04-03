@@ -195,12 +195,16 @@ categorySelect.addEventListener('change', loadTransactions);
 // ========================================================================
 const tableBody = document.getElementById('tableBody');
 
+// --- State ---
+let allTransactions = [];
+let sortCol = null;
+let sortDir = 'asc';
+let colFilters = {};
+
+// --- Load from API ---
 async function loadTransactions() {
     const month = monthSelect.value;
     const category = categorySelect.value;
-
-    console.log('monthSelect.value:', month);
-    console.log('categorySelect.value:', category);
 
     if (!month) return;
 
@@ -210,47 +214,116 @@ async function loadTransactions() {
 
         const response = await fetch(`/transactions?${params}`);
         const data = await response.json();
-        const transactions = data.transactions || data;
+        allTransactions = data.transactions || data;
 
-        console.log("transactions response:", data);
-        console.log("type:", typeof data);
-        console.log("is array:", Array.isArray(data));
-
-        if (transactions.length === 0) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="empty-state">
-                        <p>No transactions found for this month.</p>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        tableBody.innerHTML = transactions.map(t => `
-            <tr class="category-${t.category}">
-                <td>${t.transactionDate}</td>
-                <td>${t.postDate}</td>
-                <td>${t.description}</td>
-                <td>${t.amount < 0 ? '($' : '$'}${Math.abs(t.amount).toFixed(2)}${t.amount < 0 ? ')' : ''}</td>
-                <td>
-                    <select class="category-select" data-id="${t.id}" data-current="${t.category}">
-                        ${generateCategoryOptions(t.category)}
-                    </select>
-                </td>
-                <td>${t.source}</td>
-            </tr>
-        `).join('');
-
-        // Attach category change handlers
-        document.querySelectorAll('.category-select').forEach(select => {
-            select.addEventListener('change', (e) => updateCategory(e.target.dataset.id, e.target.value));
-        });
+        renderTable();
     } catch (error) {
         console.error('Error loading transactions:', error);
         showToast(`Error loading transactions: ${error.message}`, 'error');
     }
 }
+
+// --- Render filtered + sorted data ---
+function renderTable() {
+    let rows = [...allTransactions];
+
+    // Apply column filters
+    rows = rows.filter(t => {
+        return Object.entries(colFilters).every(([col, val]) => {
+            if (!val) return true;
+            const cellVal = getColValue(t, col).toString().toLowerCase();
+            return cellVal.includes(val.toLowerCase());
+        });
+    });
+
+    // Apply sort
+    if (sortCol) {
+        rows.sort((a, b) => {
+            let av = getColValue(a, sortCol);
+            let bv = getColValue(b, sortCol);
+            if (typeof av === 'string') av = av.toLowerCase();
+            if (typeof bv === 'string') bv = bv.toLowerCase();
+            if (av < bv) return sortDir === 'asc' ? -1 : 1;
+            if (av > bv) return sortDir === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+
+    if (rows.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty-state">
+                    <p>No transactions found.</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tableBody.innerHTML = rows.map(t => `
+        <tr class="category-${t.category}">
+            <td>${t.transactionDate}</td>
+            <td>${t.postDate}</td>
+            <td>${t.description}</td>
+            <td>${t.amount < 0 ? '($' : '$'}${Math.abs(t.amount).toFixed(2)}${t.amount < 0 ? ')' : ''}</td>
+            <td>
+                <select class="category-select" data-id="${t.id}" data-current="${t.category}">
+                    ${generateCategoryOptions(t.category)}
+                </select>
+            </td>
+            <td>${t.source}</td>
+        </tr>
+    `).join('');
+
+    document.querySelectorAll('.category-select').forEach(select => {
+        select.addEventListener('change', (e) => updateCategory(e.target.dataset.id, e.target.value));
+    });
+}
+
+// --- Get a comparable value for a transaction column ---
+function getColValue(t, col) {
+    switch (col) {
+        case 'transactionDate': return t.transactionDate || '';
+        case 'postDate':        return t.postDate || '';
+        case 'description':     return t.description || '';
+        case 'amount':          return t.amount;
+        case 'category':        return t.category || '';
+        case 'source':          return t.source || '';
+        default:                return '';
+    }
+}
+
+// --- Sort on header click ---
+document.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (sortCol === col) {
+            sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortCol = col;
+            sortDir = 'asc';
+        }
+
+        // Update header classes
+        document.querySelectorAll('th.sortable').forEach(h => {
+            h.classList.remove('sort-asc', 'sort-desc');
+        });
+        th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+
+        renderTable();
+    });
+});
+
+// --- Filter on input ---
+document.querySelectorAll('.col-filter').forEach(input => {
+    input.addEventListener('input', (e) => {
+        colFilters[e.target.dataset.col] = e.target.value;
+        renderTable();
+    });
+
+    // Prevent header sort from firing when clicking into filter input
+    input.addEventListener('click', (e) => e.stopPropagation());
+});
 
 function generateCategoryOptions(currentCategory) {
     // Use categories from API cache, sorted by sort_order

@@ -238,6 +238,30 @@ tbody tr:hover {
     background: #f8f9fa;
 }
 
+th.sortable {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+th.sortable:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+th.sort-asc .sort-icon::after { content: ' ▲'; }
+th.sort-desc .sort-icon::after { content: ' ▼'; }
+.sort-icon { font-size: 0.75em; opacity: 0.5; }
+th.sort-asc .sort-icon,
+th.sort-desc .sort-icon { opacity: 1; }
+
+#filterRow th { padding: 4px 6px; }
+.col-filter {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 6px;
+    font-size: 0.8em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
 /* Category colors */
 .category-badge {
     padding: 0.25rem 0.75rem;

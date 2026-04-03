@@ -69,24 +69,32 @@
                     <table id="transactionsTable">
                         <thead>
                             <tr>
-                                <th>Transaction Date</th>
-                                <th>Transaction Post Date</th>
-                                <th>Description</th>
-                                <th>Amount</th>
-                                <th>Category</th>
-                                <th>Source</th>
+                                <th data-col="transactionDate" class="sortable">Transaction Date <span class="sort-icon">⇅</span></th>
+                                <th data-col="postDate" class="sortable">Post Date <span class="sort-icon">⇅</span></th>
+                                <th data-col="description" class="sortable">Description <span class="sort-icon">⇅</span></th>
+                                <th data-col="amount" class="sortable">Amount <span class="sort-icon">⇅</span></th>
+                                <th data-col="category" class="sortable">Category <span class="sort-icon">⇅</span></th>
+                                <th data-col="source" class="sortable">Source <span class="sort-icon">⇅</span></th>
+                            </tr>
+                            <tr id="filterRow">
+                                <th><input class="col-filter" data-col="transactionDate" placeholder="Filter…" /></th>
+                                <th><input class="col-filter" data-col="postDate" placeholder="Filter…" /></th>
+                                <th><input class="col-filter" data-col="description" placeholder="Filter…" /></th>
+                                <th><input class="col-filter" data-col="amount" placeholder="Filter…" /></th>
+                                <th><input class="col-filter" data-col="category" placeholder="Filter…" /></th>
+                                <th><input class="col-filter" data-col="source" placeholder="Filter…" /></th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
                             <tr>
-                                <td colspan="5" class="empty-state">
+                                <td colspan="6" class="empty-state">
                                     <p>No transactions. Upload a CSV file to get started.</p>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
+</div>
         </div>
     </div>
 
