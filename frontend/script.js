@@ -229,9 +229,9 @@ async function loadTransactions() {
 
         tableBody.innerHTML = transactions.map(t => `
             <tr class="category-${t.category}">
-                <td>${t.date}</td>
+                <td>${t.transactionDate}</td>
                 <td>${t.description}</td>
-                <td>$${Math.abs(t.amount).toFixed(2)}</td>
+                <td>${t.amount < 0 ? '($' : '$'}${Math.abs(t.amount).toFixed(2)}${t.amount < 0 ? ')' : ''}</td>
                 <td>
                     <select class="category-select" data-id="${t.id}" data-current="${t.category}">
                         ${generateCategoryOptions(t.category)}
@@ -307,16 +307,22 @@ async function loadSummary() {
         }
 
         const sorted = Object.entries(summary)
-            .sort(([, a], [, b]) => Math.abs(b) - Math.abs(a));
+            .sort(([, a], [, b]) => b - a);
 
-        summaryGrid.innerHTML = sorted.map(([category, amount]) => `
-            <div class="summary-item">
-                <span class="summary-item-label">${category}</span>
-                <span class="summary-item-amount category-${category}">
-                    $${Math.abs(amount).toFixed(2)}
-                </span>
-            </div>
-        `).join('');
+        summaryGrid.innerHTML = sorted.map(([category, amount]) => {
+            const formatted = amount < 0
+                ? `($${Math.abs(amount).toFixed(2)})`
+                : `$${amount.toFixed(2)}`;
+
+            return `
+                <div class="summary-item">
+                    <span class="summary-item-label">${category}</span>
+                    <span class="summary-item-amount category-${category}">
+                        ${formatted}
+                    </span>
+                </div>
+            `;
+        }).join('');
     } catch (error) {
         console.error('Error loading summary:', error);
         showToast(`Error loading summary: ${error.message}`, 'error');

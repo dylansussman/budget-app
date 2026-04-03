@@ -139,7 +139,6 @@ def parse_capitalone_csv(file_input: Union[str, object]) -> List[Dict]:
     
     Args:
         file_input: File path (str) or file-like object
-        account: Last 4 digits of account number
     
     Returns:
         List of transaction dicts with keys:
@@ -236,6 +235,83 @@ def parse_capitalone_csv(file_input: Union[str, object]) -> List[Dict]:
             'source': 'capital one',
             'csv_category': csv_category,
             'account': card_no,
+            'type': type
+        })
+    
+    return transactions
+
+def parse_venmo_csv(file_input: Union[str, object]) -> List[Dict]:
+    """
+    Parse Venmo CSV format.
+    
+    Expected columns:
+    Datetime, Type, Note, Amount (total)
+    
+    Args:
+        file_input: File path (str) or file-like object
+    
+    Returns:
+        List of transaction dicts with keys:
+        date, merchant, amount, raw_description, source, csv_category (optional)
+    
+    Raises:
+        ValueError: If required columns not found
+    """
+    try:
+        df = pd.read_csv(file_input)
+    except Exception as e:
+        raise ValueError(f"Failed to read CSV file: {str(e)}")
+    
+    # Normalize column names (strip whitespace)
+    df.columns = df.columns.str.strip()
+    
+    # Check for required columns
+    required_cols = ['Datetime', 'Type', 'Note', 'Amount (total)']
+    found_cols = set(df.columns)
+    missing_cols = [col for col in required_cols if col not in found_cols]
+    
+    if missing_cols:
+        raise ValueError(
+            f"Venmo CSV parser: Missing required columns {missing_cols}. "
+            f"Found columns: {list(found_cols)}"
+        )
+    
+    transactions = []
+    
+    for _, row in df.iterrows():
+        # Parse transaction date
+        try:
+            trans_date = pd.to_datetime(row['Datetime']).date()
+        except Exception:
+            continue  # Skip rows with invalid dates
+        
+        # Get amount
+        amount = None
+        try:
+            amount_str = str(row['Amount (total)']).strip().replace('$', '').replace(',', '')
+            if (amount_str.startswith('(') and amount_str.endswith(')')):
+                amount = float(amount_str[1:-1]) * -1  # Negative amount
+            else:
+                amount = float(amount_str)
+        except (ValueError, TypeError):
+            continue  # Skip rows with invalid amounts
+
+        # Get type
+        try:
+            type = str(row['Type']).strip().lower()
+        except Exception:
+            continue  # Skip rows with invalid type
+        
+        # Clean merchant name
+        raw_desc = str(row['Note']).strip()
+        
+        transactions.append({
+            'transactionDate': trans_date,
+            'postDate': trans_date,
+            'amount': amount,
+            'description': raw_desc,
+            'source': 'venmo',
+            'csv_category': None,
             'type': type
         })
     
@@ -389,6 +465,8 @@ def parse_csv(file_input: Union[str, object], source: str = "auto", account: str
         return parse_chase_csv(file_input, account)
     elif source == "capitalone":
         return parse_capitalone_csv(file_input)
+    elif source == "venmo":
+        return parse_venmo_csv(file_input)
     elif source == "generic":
         return parse_generic_csv(file_input)
     elif source == "auto":

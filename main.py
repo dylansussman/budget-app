@@ -121,6 +121,8 @@ async def upload_csv_files(files: list[UploadFile] = File(...)):
                     account = filename[filename.find(source)+1:filename.find("_")]
                 elif "capitalone" in filename:
                     source = "capitalone"
+                elif "venmo" in filename:
+                    source = "venmo"
                 else:
                     source = "generic"
                                     
