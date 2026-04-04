@@ -439,3 +439,17 @@ def get_monthly_summary(month: str) -> dict:
         return {row[0]: row[1] for row in results}
     finally:
         session.close()
+
+def delete_transaction_by_id(transaction_id: int) -> bool:
+    db = SessionLocal()
+    try:
+        transaction = db.query(Transaction).filter(
+            Transaction.id == transaction_id
+        ).first()
+        if not transaction:
+            return False
+        db.delete(transaction)
+        db.commit()
+        return True
+    finally:
+        db.close()

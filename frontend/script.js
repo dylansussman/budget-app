@@ -263,7 +263,6 @@ function renderTable() {
     tableBody.innerHTML = rows.map(t => `
         <tr class="category-${t.category}">
             <td>${t.transactionDate}</td>
-            <td>${t.postDate}</td>
             <td>${t.description}</td>
             <td>${t.amount < 0 ? '($' : '$'}${Math.abs(t.amount).toFixed(2)}${t.amount < 0 ? ')' : ''}</td>
             <td>
@@ -272,6 +271,11 @@ function renderTable() {
                 </select>
             </td>
             <td>${t.source}</td>
+            <td>
+                <button class="delete-btn" onclick="deleteTransaction(${t.id})">
+                    ✕
+                </button>
+            </td>
         </tr>
     `).join('');
 
@@ -324,6 +328,63 @@ document.querySelectorAll('.col-filter').forEach(input => {
     // Prevent header sort from firing when clicking into filter input
     input.addEventListener('click', (e) => e.stopPropagation());
 });
+
+// ---- Add Transaction ----
+function openAddModal() {
+    const select = document.getElementById('newCategory');
+    select.innerHTML = `<option value="" disabled selected>Select a category</option>` 
+        + generateCategoryOptions('');
+    document.getElementById('addModal').style.display = 'flex';
+}
+
+function closeAddModal() {
+    document.getElementById('addModal').style.display = 'none';
+}
+
+async function submitAddTransaction() {
+    const transaction = {
+        transactionDate:     document.getElementById('newTransactionDate').value,
+        postDate:     document.getElementById('newTransactionDate').value,
+        description: document.getElementById('newDescription').value,
+        amount:   parseFloat(document.getElementById('newAmount').value),
+        category: document.getElementById('newCategory').value,
+        source:   document.getElementById('newSource').value,
+    };
+
+    if (!transaction.transactionDate || !transaction.postDate || !transaction.description || isNaN(transaction.amount)) {
+        showToast('Please fill in all required fields.', 'error');
+        return;
+    }
+
+    const response = await fetch('/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaction)
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+        showToast('✓ Transaction added');
+        closeAddModal();
+        loadTransactions(); // refresh the table
+    } else {
+        showToast(`Error: ${data.detail}`, 'error');
+    }
+}
+
+// ---- Delete Transaction ----
+async function deleteTransaction(id) {
+    if (!confirm('Delete this transaction?')) return;
+
+    const response = await fetch(`/transactions/${id}`, { method: 'DELETE' });
+    if (response.ok) {
+        document.getElementById(`row-${id}`).remove();
+        showToast('Transaction deleted');
+    } else {
+        const data = await response.json();
+        showToast(`Error: ${data.detail}`, 'error');
+    }
+}
 
 function generateCategoryOptions(currentCategory) {
     // Use categories from API cache, sorted by sort_order

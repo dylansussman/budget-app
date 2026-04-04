@@ -1,3 +1,4 @@
+import hashlib
 import os
 from pathlib import Path
 from datetime import datetime
@@ -13,9 +14,11 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 
 # Import database functions and models
+from data import categorizer
 from data.database import (
     Transaction, init_db, insert_transactions, get_transactions, get_transaction_months,
-    update_category, get_monthly_summary, SessionLocal, Category, Keyword, CSVCategoryMap
+    update_category, get_monthly_summary, SessionLocal, Category, Keyword, CSVCategoryMap,
+    delete_transaction_by_id
 )
 
 # Import categorizer and sheets_sync
@@ -646,6 +649,37 @@ async def delete_csv_mapping(mapping_id: int):
     
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/transactions")
+async def add_transaction(transaction: dict):
+    """Manually add a single transaction."""
+    try:
+        # Categorize if no category provided
+        if not transaction.get("category"):
+            transaction["category"] = categorizer.categorize(transaction.get("description", ""))
+        
+        # Generate import_id
+        import_id_str = f"{transaction['transactionDate']}{transaction['postDate']}{transaction['amount']}"
+        transaction["import_id"] = hashlib.sha256(import_id_str.encode()).hexdigest()
+        transaction.setdefault("source", "manual")
+        transaction.setdefault("raw_description", transaction.get("description", ""))
+
+        result = insert_transactions([transaction])
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/transactions/{id}")
+async def delete_transaction(id: int):
+    """Delete a transaction by ID."""
+    try:
+        success = delete_transaction_by_id(id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        return {"deleted": id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

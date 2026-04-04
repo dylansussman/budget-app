@@ -1,6 +1,7 @@
 # TODOS
 - Add following functionality to transaction table
-   - Add/remove transactions via UI
+   - Add/remove transactions via UI -- NEED TO TEST functionality stil (UI looks good)
+      - Check how functionality works if I add a transaction to a different month than the transaction date -- does it automatically get put into the correct month?
 - Add other types of transactions to DB (Zelle, transfers, ATM, etc.)
 - Double check that all transaction history (per month) matches spreadsheet (spending by category in 2025 & 2026)
 - Calculate spending predictions for each category for the next month
