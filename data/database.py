@@ -44,7 +44,7 @@ class Transaction(Base):
     amount = Column(Float, nullable=False)
     source = Column(String, nullable=False)
     account = Column(String, nullable=True)
-    type = Column(String, nullable=False)
+    type = Column(String, nullable=True)
     import_id = Column(String, nullable=False, unique=True)
     created_at = Column(DateTime, default=func.now(), nullable=False)
     
@@ -274,6 +274,12 @@ def insert_transactions(transactions: list[dict]) -> dict:
                 skipped_duplicates += 1
                 continue
             
+            # Make sure dates are in correct format (convert if needed)
+            if isinstance(trans['transactionDate'], str):
+                trans['transactionDate'] = datetime.strptime(trans['transactionDate'], "%Y-%m-%d").date()
+            if isinstance(trans['postDate'], str):
+                trans['postDate'] = datetime.strptime(trans['postDate'], "%Y-%m-%d").date()
+            
             # Categorize transaction
             try:
                 csv_category = trans.get('csv_category')
@@ -299,7 +305,7 @@ def insert_transactions(transactions: list[dict]) -> dict:
                 amount=trans['amount'],
                 source=trans['source'],
                 account=trans.get('account'),
-                type=trans['type'],
+                type=trans.get('type'),
                 import_id=import_id
             )
             session.add(transaction)

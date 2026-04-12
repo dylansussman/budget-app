@@ -331,6 +331,7 @@ document.querySelectorAll('.col-filter').forEach(input => {
 
 // ---- Add Transaction ----
 function openAddModal() {
+    clearAddForm();
     const select = document.getElementById('newCategory');
     select.innerHTML = `<option value="" disabled selected>Select a category</option>` 
         + generateCategoryOptions('');
@@ -370,6 +371,14 @@ async function submitAddTransaction() {
     } else {
         showToast(`Error: ${data.detail}`, 'error');
     }
+}
+
+function clearAddForm() {
+    document.getElementById('newTransactionDate').value = '';
+    document.getElementById('newDescription').value = '';
+    document.getElementById('newAmount').value = '';
+    document.getElementById('newCategory').value = '';
+    document.getElementById('newSource').value = '';
 }
 
 // ---- Delete Transaction ----
