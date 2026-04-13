@@ -1,7 +1,6 @@
 # TODOS
 - Add following functionality to transaction table
    - Add/remove transactions via UI -- NEED TO TEST functionality stil (UI looks good)
-      - In add modal, when a date is clicked, close the calendar popup
       - Make sure calendar is in right time zone for date input (Think it's currently 5 hours ahead of CT)
       - Add keyboard listener to use enter key when adding transaction
 - Add other types of transactions to DB (Zelle, transfers, ATM, etc.)
@@ -11,6 +10,8 @@
 - Add functionality for pushing rolling 6 month average/category to Google Sheets
    - Use suggestions & code from Claude
 - When adding a transaction from the UI, and adding to different month than what is currently being filtered/displayed, bring user to correct filtered page with month that transaction was just added to (and make sure to reload so month transaction filter dropdown updates or put a listener in the dropdown itself to auto update)
+- In add modal, when a date is clicked, close the calendar popup
+   - According to Claude, this is no workaround in Safari with browser native date picker, so need to import a third party library date picker
 
 # Budget App
 
