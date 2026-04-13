@@ -365,7 +365,11 @@ async function submitAddTransaction() {
 
     const data = await response.json();
     if (response.ok) {
-        showToast('✓ Transaction added');
+        if (data.skipped_duplicates > 0 && data.imported === 0) {
+            showToast('✗ Transaction not added (duplicate)');
+        } else {
+            showToast('✓ Transaction added');
+        }
         closeAddModal();
         loadTransactions(); // refresh the table
     } else {
@@ -387,7 +391,7 @@ async function deleteTransaction(id) {
 
     const response = await fetch(`/transactions/${id}`, { method: 'DELETE' });
     if (response.ok) {
-        document.getElementById(`row-${id}`).remove();
+        await loadTransactions();
         showToast('Transaction deleted');
     } else {
         const data = await response.json();

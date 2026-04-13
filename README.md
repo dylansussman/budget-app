@@ -1,8 +1,9 @@
 # TODOS
 - Add following functionality to transaction table
    - Add/remove transactions via UI -- NEED TO TEST functionality stil (UI looks good)
-      - Modify popup for adding to not say added for skipped duplicate transactions
-      - Refresh after deleting a transactions (currently transaction still displayed until reload)
+      - In add modal, when a date is clicked, close the calendar popup
+      - Make sure calendar is in right time zone for date input (Think it's currently 5 hours ahead of CT)
+      - Add keyboard listener to use enter key when adding transaction
 - Add other types of transactions to DB (Zelle, transfers, ATM, etc.)
 - Double check that all transaction history (per month) matches spreadsheet (spending by category in 2025 & 2026)
 - Calculate spending predictions for each category for the next month

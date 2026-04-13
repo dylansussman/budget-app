@@ -656,16 +656,9 @@ async def delete_csv_mapping(mapping_id: int):
 async def add_transaction(transaction: dict):
     """Manually add a single transaction."""
     try:
-        # Categorize if no category provided
-        # if not transaction.get("category"):
-        #     transaction["category"] = categorizer.categorize(transaction.get("description", ""))
-
         if not transaction.get("type"):
             transaction["type"] = None
         
-        # Generate import_id
-        # import_id_str = f"{transaction['transactionDate']}{transaction['postDate']}{transaction['amount']}"
-        # transaction["import_id"] = hashlib.sha256(import_id_str.encode()).hexdigest()
         transaction.setdefault("source", "manual")
         transaction.setdefault("raw_description", transaction.get("description", ""))
 
