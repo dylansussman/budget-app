@@ -336,10 +336,23 @@ function openAddModal() {
     select.innerHTML = `<option value="" disabled selected>Select a category</option>` 
         + generateCategoryOptions('');
     document.getElementById('addModal').style.display = 'flex';
+
+    const handleEnter = (e) => {
+        if (e.key === 'Enter') {
+            submitAddTransaction();
+        }
+    };
+    document.addEventListener('keydown', handleEnter);
+    document.getElementById('addModal')._enterHandler = handleEnter;
 }
 
 function closeAddModal() {
-    document.getElementById('addModal').style.display = 'none';
+    const modal = document.getElementById('addModal');
+    if (modal._enterHandler) {
+        document.removeEventListener('keydown', modal._enterHandler);
+        modal._enterHandler = null;
+    }
+    modal.style.display = 'none';
 }
 
 async function submitAddTransaction() {
