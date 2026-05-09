@@ -1,5 +1,6 @@
 # TODOS
 - Add other types of transactions to DB (Zelle, transfers, ATM, etc.)
+   - On November transactions
 - Double check that all transaction history (per month) matches spreadsheet (spending by category in 2025 & 2026)
 - Calculate spending predictions for each category for the next month
 - Have monthly summary update reload automatically (not only on month change or page reload)
