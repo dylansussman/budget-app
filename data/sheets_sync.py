@@ -1,9 +1,9 @@
 import os
 from datetime import datetime
 from pathlib import Path
-
 import gspread
 from google.oauth2.service_account import Credentials
+import statistics
 
 # Scope required for Google Sheets API
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -129,19 +129,26 @@ def write_rolling_summary(month_summaries: dict) -> dict:
         rows.append(row)
 
     # Predicted row — per-category and total averages
+    # Predicted row — per-category mean and median
     n = len(month_summaries)
-    predicted_row = ["Predicted"]
+    mean_row = ["Mean"]
+    median_row = ["Median"]
+
     for cat in all_categories:
         cat_values = [
             m.get(cat, 0.0)
             for m in month_summaries.values()
             if m.get(cat) is not None
         ]
-        avg = round(sum(cat_values) / n, 2) if cat_values else ""
-        predicted_row.append(avg)
-    predicted_total = round(sum(month_totals) / n, 2) if month_totals else ""
-    predicted_row.append(predicted_total)
-    rows.append(predicted_row)
+        mean_row.append(round(sum(cat_values) / n, 2) if cat_values else "")
+        median_row.append(round(statistics.median(cat_values), 2) if cat_values else "")
+
+    # Totals column for mean/median rows
+    mean_row.append(round(sum(month_totals) / n, 2) if month_totals else "")
+    median_row.append(round(statistics.median(month_totals), 2) if month_totals else "")
+
+    rows.append(mean_row)
+    rows.append(median_row)
 
     worksheet.append_rows(rows, value_input_option="RAW")
 
