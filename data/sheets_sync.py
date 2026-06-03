@@ -9,12 +9,12 @@ import statistics
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 # Column headers as per spec
-HEADERS = ["Date", "Merchant", "Amount", "Category", "Source", "Account", "Notes"]
+HEADERS = ["Transaction Date", "Post Date", "Description", "Source", "Amount"]
 
 # Month names for tab naming
 MONTH_NAMES = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
 ]
 
 
@@ -224,13 +224,11 @@ def sync_month(month: str, transactions: list[dict]) -> dict:
         
         for txn in transactions:
             row = [
-                str(txn.get("date", "")),
-                str(txn.get("merchant", "")),
+                str(txn.get("transactionDate", "")),
+                str(txn.get("postDate", "")),
+                str(txn.get("description", "")),
+                str(f"{txn.get('source', '')} {txn.get('account', '')}".strip()),
                 str(txn.get("amount", "")),
-                str(txn.get("category", "")),
-                str(txn.get("source", "")),
-                str(txn.get("account", "")),
-                str(txn.get("raw_description", ""))  # Maps to Notes column
             ]
             data.append(row)
         
