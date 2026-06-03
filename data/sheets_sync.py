@@ -1,20 +1,20 @@
 import os
 from datetime import datetime
 from pathlib import Path
-
 import gspread
 from google.oauth2.service_account import Credentials
+import statistics
 
 # Scope required for Google Sheets API
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 # Column headers as per spec
-HEADERS = ["Date", "Merchant", "Amount", "Category", "Source", "Account", "Notes"]
+HEADERS = ["Transaction Date", "Post Date", "Description", "Source", "Amount"]
 
 # Month names for tab naming
 MONTH_NAMES = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
 ]
 
 
@@ -82,6 +82,80 @@ def _get_spreadsheet():
             "Ensure the sheet exists and the service account has access."
         )
 
+# Month names reused from top of file (already defined as MONTH_NAMES)
+
+def write_rolling_summary(month_summaries: dict) -> dict:
+    """
+    Write a rolling multi-month spending summary to a "Rolling Summary" tab.
+
+    Args:
+        month_summaries: { "2024-11": { "Groceries": 420.50, ... }, ... }
+                         Keys are YYYY-MM strings, ordered oldest → newest.
+
+    Returns:
+        dict with keys:
+            - sheet_url: URL to the spreadsheet
+            - rows_written: Number of month rows written (excluding header/predicted)
+    """
+    spreadsheet = _get_spreadsheet()
+    tab_name = "Rolling Summary"
+    worksheet = _get_or_create_worksheet(spreadsheet, tab_name)
+    worksheet.clear()
+
+    if not month_summaries:
+        return {"sheet_url": spreadsheet.url, "rows_written": 0}
+
+    # Collect all unique categories, preserving insertion order across months
+    all_categories: list[str] = []
+    seen: set[str] = set()
+    for monthly in month_summaries.values():
+        for cat in monthly:
+            if cat not in seen:
+                all_categories.append(cat)
+                seen.add(cat)
+
+    # Header row
+    header = ["Month"] + all_categories + ["Total"]
+    rows = [header]
+
+    # One data row per month
+    month_totals: list[float] = []
+    for month_key, monthly in month_summaries.items():
+        date_obj = datetime.strptime(month_key, "%Y-%m")
+        label = f"{MONTH_NAMES[date_obj.month - 1]} {date_obj.year}"
+        row_total = sum(monthly.get(cat, 0.0) for cat in all_categories)
+        month_totals.append(-row_total)
+        row = [label] + [-monthly.get(cat, 0) for cat in all_categories] + [-round(row_total, 2)]
+        rows.append(row)
+
+    # Predicted row — per-category and total averages
+    # Predicted row — per-category mean and median
+    n = len(month_summaries)
+    mean_row = ["Mean"]
+    median_row = ["Median"]
+
+    for cat in all_categories:
+        cat_values = [
+            m.get(cat, 0.0)
+            for m in month_summaries.values()
+            if m.get(cat) is not None
+        ]
+        mean_row.append(round(-sum(cat_values) / n, 2) if cat_values else "")
+        median_row.append(round(-statistics.median(cat_values), 2) if cat_values else "")
+
+    # Totals column for mean/median rows
+    mean_row.append(round(sum(month_totals) / n, 2) if month_totals else "")
+    median_row.append(round(statistics.median(month_totals), 2) if month_totals else "")
+
+    rows.append(mean_row)
+    rows.append(median_row)
+
+    worksheet.append_rows(rows, value_input_option="RAW")
+
+    return {
+        "sheet_url": spreadsheet.url,
+        "rows_written": len(month_summaries),
+    }
 
 def _format_month_tab(month: str) -> str:
     """
@@ -150,13 +224,11 @@ def sync_month(month: str, transactions: list[dict]) -> dict:
         
         for txn in transactions:
             row = [
-                str(txn.get("date", "")),
-                str(txn.get("merchant", "")),
+                str(txn.get("transactionDate", "")),
+                str(txn.get("postDate", "")),
+                str(txn.get("description", "")),
+                str(f"{txn.get('source', '')} {txn.get('account', '')}".strip()),
                 str(txn.get("amount", "")),
-                str(txn.get("category", "")),
-                str(txn.get("source", "")),
-                str(txn.get("account", "")),
-                str(txn.get("raw_description", ""))  # Maps to Notes column
             ]
             data.append(row)
         

@@ -491,3 +491,11 @@ th.sort-desc .sort-icon { opacity: 1; }
         min-width: auto;
     }
 }
+
+.rolling-summary-btn {
+    background: #8e44ad;
+}
+
+.rolling-summary-btn:hover:not(:disabled) {
+    background: #7d3c98;
+}

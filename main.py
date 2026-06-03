@@ -1,17 +1,15 @@
-import hashlib
-import os
 from pathlib import Path
-from datetime import datetime
 import io
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Body
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
 from dotenv import load_dotenv
+from dateutil.relativedelta import relativedelta
+from datetime import date, datetime
+from data.sheets_sync import sync_month, write_rolling_summary
 
 # Import database functions and models
 from data import categorizer
@@ -121,7 +119,7 @@ async def upload_csv_files(files: list[UploadFile] = File(...)):
                 account = "unknown"
                 if "chase" in filename:
                     source = "chase"
-                    account = filename[filename.find(source)+1:filename.find("_")]
+                    account = filename[filename.find(source) + len(source):filename.find("_")]
                 elif "capitalone" in filename:
                     source = "capitalone"
                 elif "venmo" in filename:
@@ -151,6 +149,42 @@ async def upload_csv_files(files: list[UploadFile] = File(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.post("/sync/summary")
+async def sync_rolling_summary(request: SyncRequest):
+    """
+    Calculate a rolling 6-month spending summary ending the month before
+    the selected month, then push to a "Rolling Summary" tab in Google Sheets.
+
+    Body: { month: "2025-05" }
+    Returns: { sheet_url: "...", rows_written: N, months_included: [...] }
+    """
+    try:
+        anchor = datetime.strptime(request.month, "%Y-%m")
+        # Go back 1 month so selected month is excluded, then collect 6 months
+        month_summaries: dict[str, dict] = {}
+        for i in range(6, 0, -1):  # 6 months before anchor → 1 month before anchor
+            target = anchor - relativedelta(months=i)
+            month_key = target.strftime("%Y-%m")
+            summary = get_monthly_summary(month_key)
+            if summary:
+                month_summaries[month_key] = summary
+
+        if not month_summaries:
+            raise HTTPException(
+                status_code=400,
+                detail=f"No transaction data found in the 6 months before {request.month}."
+            )
+
+        result = write_rolling_summary(month_summaries)
+        return {
+            **result,
+            "months_included": list(month_summaries.keys()),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/transactions")
 async def get_all_transactions(

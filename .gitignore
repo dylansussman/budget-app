@@ -51,3 +51,6 @@ credentials.json
 
 # Project specific
 *.csv
+
+# DB Quries
+*.sqlite3-query
