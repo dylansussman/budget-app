@@ -1,17 +1,15 @@
-import hashlib
-import os
 from pathlib import Path
-from datetime import datetime
 import io
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI, UploadFile, File, HTTPException, Query, Body
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
 from dotenv import load_dotenv
+from dateutil.relativedelta import relativedelta
+from datetime import date
+from data.sheets_sync import sync_month, write_rolling_summary
 
 # Import database functions and models
 from data import categorizer
@@ -151,6 +149,42 @@ async def upload_csv_files(files: list[UploadFile] = File(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.post("/sync/summary")
+async def sync_rolling_summary():
+    """
+    Calculate a rolling 6-month spending average from SQLite and push it
+    to a "Rolling Summary" tab in Google Sheets.
+
+    Returns:
+        { sheet_url: "...", rows_written: N, months_included: [...] }
+    """
+    try:
+        today = date.today()
+        month_summaries: dict[str, dict] = {}
+
+        for i in range(5, -1, -1):  # 5 months ago → current month
+            target = today - relativedelta(months=i)
+            month_key = target.strftime("%Y-%m")
+            summary = get_monthly_summary(month_key)
+            if summary:  # only include months that have data
+                month_summaries[month_key] = summary
+
+        if not month_summaries:
+            raise HTTPException(
+                status_code=400,
+                detail="No transaction data found in the last 6 months."
+            )
+
+        result = write_rolling_summary(month_summaries)
+        return {
+            **result,
+            "months_included": list(month_summaries.keys()),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/transactions")
 async def get_all_transactions(

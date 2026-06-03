@@ -82,6 +82,73 @@ def _get_spreadsheet():
             "Ensure the sheet exists and the service account has access."
         )
 
+# Month names reused from top of file (already defined as MONTH_NAMES)
+
+def write_rolling_summary(month_summaries: dict) -> dict:
+    """
+    Write a rolling multi-month spending summary to a "Rolling Summary" tab.
+
+    Args:
+        month_summaries: { "2024-11": { "Groceries": 420.50, ... }, ... }
+                         Keys are YYYY-MM strings, ordered oldest → newest.
+
+    Returns:
+        dict with keys:
+            - sheet_url: URL to the spreadsheet
+            - rows_written: Number of month rows written (excluding header/predicted)
+    """
+    spreadsheet = _get_spreadsheet()
+    tab_name = "Rolling Summary"
+    worksheet = _get_or_create_worksheet(spreadsheet, tab_name)
+    worksheet.clear()
+
+    if not month_summaries:
+        return {"sheet_url": spreadsheet.url, "rows_written": 0}
+
+    # Collect all unique categories, preserving insertion order across months
+    all_categories: list[str] = []
+    seen: set[str] = set()
+    for monthly in month_summaries.values():
+        for cat in monthly:
+            if cat not in seen:
+                all_categories.append(cat)
+                seen.add(cat)
+
+    # Header row
+    header = ["Month"] + all_categories + ["Total"]
+    rows = [header]
+
+    # One data row per month
+    month_totals: list[float] = []
+    for month_key, monthly in month_summaries.items():
+        date_obj = datetime.strptime(month_key, "%Y-%m")
+        label = f"{MONTH_NAMES[date_obj.month - 1]} {date_obj.year}"
+        row_total = sum(monthly.get(cat, 0.0) for cat in all_categories)
+        month_totals.append(row_total)
+        row = [label] + [monthly.get(cat, "") for cat in all_categories] + [round(row_total, 2)]
+        rows.append(row)
+
+    # Predicted row — per-category and total averages
+    n = len(month_summaries)
+    predicted_row = ["Predicted"]
+    for cat in all_categories:
+        cat_values = [
+            m.get(cat, 0.0)
+            for m in month_summaries.values()
+            if m.get(cat) is not None
+        ]
+        avg = round(sum(cat_values) / n, 2) if cat_values else ""
+        predicted_row.append(avg)
+    predicted_total = round(sum(month_totals) / n, 2) if month_totals else ""
+    predicted_row.append(predicted_total)
+    rows.append(predicted_row)
+
+    worksheet.append_rows(rows, value_input_option="RAW")
+
+    return {
+        "sheet_url": spreadsheet.url,
+        "rows_written": len(month_summaries),
+    }
 
 def _format_month_tab(month: str) -> str:
     """

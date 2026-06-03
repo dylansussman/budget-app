@@ -532,6 +532,37 @@ syncBtn.addEventListener('click', async () => {
 });
 
 // ========================================================================
+// Sync Rolling Summary
+// ========================================================================
+const rollingSummaryBtn = document.getElementById('rollingSummaryBtn');
+
+rollingSummaryBtn.addEventListener('click', async () => {
+    rollingSummaryBtn.disabled = true;
+    rollingSummaryBtn.textContent = '📈 Syncing...';
+
+    try {
+        const response = await fetch('/sync/summary', { method: 'POST' });
+        const data = await response.json();
+
+        if (response.ok) {
+            const monthCount = data.months_included?.length ?? data.rows_written;
+            showToast(
+                `✓ Rolling summary synced (${monthCount} months)`,
+                'success',
+                data.sheet_url
+            );
+        } else {
+            showToast(`Error: ${data.detail}`, 'error');
+        }
+    } catch (error) {
+        showToast(`Sync failed: ${error.message}`, 'error');
+    } finally {
+        rollingSummaryBtn.disabled = false;
+        rollingSummaryBtn.textContent = '📈 Sync Rolling Summary';
+    }
+});
+
+// ========================================================================
 // Initialize
 // ========================================================================
 document.addEventListener('DOMContentLoaded', () => {
