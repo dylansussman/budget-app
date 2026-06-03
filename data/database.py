@@ -442,7 +442,7 @@ def get_monthly_summary(month: str) -> dict:
         ).group_by(Category.id).all()
         
         # Convert to dict
-        return {row[0]: row[1] for row in results}
+        return {row[0]: float(row[1]) for row in results}
     finally:
         session.close()
 

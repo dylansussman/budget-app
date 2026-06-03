@@ -124,8 +124,8 @@ def write_rolling_summary(month_summaries: dict) -> dict:
         date_obj = datetime.strptime(month_key, "%Y-%m")
         label = f"{MONTH_NAMES[date_obj.month - 1]} {date_obj.year}"
         row_total = sum(monthly.get(cat, 0.0) for cat in all_categories)
-        month_totals.append(row_total)
-        row = [label] + [monthly.get(cat, "") for cat in all_categories] + [round(row_total, 2)]
+        month_totals.append(-row_total)
+        row = [label] + [-monthly.get(cat, 0) for cat in all_categories] + [-round(row_total, 2)]
         rows.append(row)
 
     # Predicted row — per-category and total averages
@@ -140,8 +140,8 @@ def write_rolling_summary(month_summaries: dict) -> dict:
             for m in month_summaries.values()
             if m.get(cat) is not None
         ]
-        mean_row.append(round(sum(cat_values) / n, 2) if cat_values else "")
-        median_row.append(round(statistics.median(cat_values), 2) if cat_values else "")
+        mean_row.append(round(-sum(cat_values) / n, 2) if cat_values else "")
+        median_row.append(round(-statistics.median(cat_values), 2) if cat_values else "")
 
     # Totals column for mean/median rows
     mean_row.append(round(sum(month_totals) / n, 2) if month_totals else "")
