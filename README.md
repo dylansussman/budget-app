@@ -1,16 +1,3 @@
-# TODOS
-- Calculate spending predictions for each category for the next month
-   - Add functionality for pushing rolling 6 month average/category to Google Sheets
-   - Use suggestions & code from Claude
-- Have monthly summary update reload automatically (not only on month change or page reload)
-- When adding a transaction from the UI, and adding to different month than what is currently being filtered/displayed, bring user to correct filtered page with month that transaction was just added to (and make sure to reload so month transaction filter dropdown updates or put a listener in the dropdown itself to auto update)
-- When adding a transaction from the UI, if there is the user selects a category, don't have it try get categorized when inserting
-   - Will probably need a flag of some kind
-- Make transactions editable from UI table
-- Add auto reload for transaction summary so that when changes are made via the ui, the monthly summary section auto updates
-- In add modal, when a date is clicked, close the calendar popup
-   - According to Claude, this is no workaround in Safari with browser native date picker, so need to import a third party library date picker
-
 # Budget App
 
 A locally-hosted web application for personal budget management. Upload transaction CSVs, automatically categorize spending, view monthly summaries, and sync to Google Sheets.
