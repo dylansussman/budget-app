@@ -541,7 +541,11 @@ rollingSummaryBtn.addEventListener('click', async () => {
     rollingSummaryBtn.textContent = '📈 Syncing...';
 
     try {
-        const response = await fetch('/sync/summary', { method: 'POST' });
+        const response = await fetch('/sync/summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ month: monthSelect.value })
+        });
         const data = await response.json();
 
         if (response.ok) {

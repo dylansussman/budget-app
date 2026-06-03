@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from dateutil.relativedelta import relativedelta
-from datetime import date
+from datetime import date, datetime
 from data.sheets_sync import sync_month, write_rolling_summary
 
 # Import database functions and models
@@ -150,29 +150,29 @@ async def upload_csv_files(files: list[UploadFile] = File(...)):
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/sync/summary")
-async def sync_rolling_summary():
+async def sync_rolling_summary(request: SyncRequest):
     """
-    Calculate a rolling 6-month spending average from SQLite and push it
-    to a "Rolling Summary" tab in Google Sheets.
+    Calculate a rolling 6-month spending summary ending the month before
+    the selected month, then push to a "Rolling Summary" tab in Google Sheets.
 
-    Returns:
-        { sheet_url: "...", rows_written: N, months_included: [...] }
+    Body: { month: "2025-05" }
+    Returns: { sheet_url: "...", rows_written: N, months_included: [...] }
     """
     try:
-        today = date.today()
+        anchor = datetime.strptime(request.month, "%Y-%m")
+        # Go back 1 month so selected month is excluded, then collect 6 months
         month_summaries: dict[str, dict] = {}
-
-        for i in range(5, -1, -1):  # 5 months ago → current month
-            target = today - relativedelta(months=i)
+        for i in range(6, 0, -1):  # 6 months before anchor → 1 month before anchor
+            target = anchor - relativedelta(months=i)
             month_key = target.strftime("%Y-%m")
             summary = get_monthly_summary(month_key)
-            if summary:  # only include months that have data
+            if summary:
                 month_summaries[month_key] = summary
 
         if not month_summaries:
             raise HTTPException(
                 status_code=400,
-                detail="No transaction data found in the last 6 months."
+                detail=f"No transaction data found in the 6 months before {request.month}."
             )
 
         result = write_rolling_summary(month_summaries)
