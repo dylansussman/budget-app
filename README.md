@@ -1,7 +1,7 @@
 # TODOS
-- Calculate spending predictions for each category for the next month
-   - Add functionality for pushing rolling 6 month average/category to Google Sheets
-   - Use suggestions & code from Claude
+- Format sheet that is pushed for monthly transactions, if possible
+   - Ideally, would want to add all the formatting:
+      - Font, text size, column type/format, colors, Table Format, etc.
 - Have monthly summary update reload automatically (not only on month change or page reload)
 - When adding a transaction from the UI, and adding to different month than what is currently being filtered/displayed, bring user to correct filtered page with month that transaction was just added to (and make sure to reload so month transaction filter dropdown updates or put a listener in the dropdown itself to auto update)
 - When adding a transaction from the UI, if there is the user selects a category, don't have it try get categorized when inserting
