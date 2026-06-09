@@ -9,7 +9,7 @@ import statistics
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 # Column headers as per spec
-HEADERS = ["Transaction Date", "Post Date", "Description", "Source", "Amount"]
+HEADERS = ["Transaction Date", "Post Date", "Description", "Category", "Source", "Amount"]
 
 # Month names for tab naming
 MONTH_NAMES = [
@@ -159,13 +159,13 @@ def write_rolling_summary(month_summaries: dict) -> dict:
 
 def _format_month_tab(month: str) -> str:
     """
-    Convert month string from "YYYY-MM" format to tab name format "Jan 2025".
+    Convert month string from "YYYY-MM" format to tab name format "January 2025".
     
     Args:
         month: Month in format "YYYY-MM"
         
     Returns:
-        Formatted tab name like "Jan 2025"
+        Formatted tab name like "January 2025"
     """
     date_obj = datetime.strptime(month, "%Y-%m")
     month_name = MONTH_NAMES[date_obj.month - 1]
@@ -227,7 +227,8 @@ def sync_month(month: str, transactions: list[dict]) -> dict:
                 str(txn.get("transactionDate", "")),
                 str(txn.get("postDate", "")),
                 str(txn.get("description", "")),
-                str(f"{txn.get('source', '')} {txn.get('account', '')}".strip()),
+                str(txn.get("category", "")),
+                str(f"{txn.get('source', '')}" + (f" {txn.get('account', '').strip()}" if txn.get('account') is not None else "")),
                 str(txn.get("amount", "")),
             ]
             data.append(row)
