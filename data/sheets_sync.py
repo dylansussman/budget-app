@@ -276,12 +276,6 @@ def _apply_formatting(worksheet, num_rows: int):
                     numberFormat=NumberFormat(type="DATE", pattern="M/D/YYYY")
                 ))
 
-            # Description (C), Category (D), Source (E): plain text
-            # for col in ["C", "D", "E"]:
-            #     batch.format_cell_range(worksheet, f"{col}2:{col}{total_rows}", CellFormat(
-            #         numberFormat=NumberFormat(type="TEXT")
-            #     ))
-
             # Amount (F): Accounting format
             batch.format_cell_range(worksheet, f"F2:F{total_rows}", CellFormat(
                 numberFormat=NumberFormat(
