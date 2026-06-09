@@ -53,4 +53,5 @@ credentials.json
 *.csv
 
 # DB Quries
+data/database_queries
 *.sqlite3-query
