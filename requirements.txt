@@ -7,3 +7,4 @@ gspread
 google-auth
 python-dotenv
 python-dateutil
+gspread-formatting
