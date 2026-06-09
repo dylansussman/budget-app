@@ -4,6 +4,12 @@ from pathlib import Path
 import gspread
 from google.oauth2.service_account import Credentials
 import statistics
+from gspread_formatting import (
+    format_cell_range,
+    CellFormat, TextFormat, Color,
+    NumberFormat, set_column_width, set_frozen,
+    batch_updater
+)
 
 # Scope required for Google Sheets API
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -234,7 +240,8 @@ def sync_month(month: str, transactions: list[dict]) -> dict:
             data.append(row)
         
         # Write all data at once
-        worksheet.append_rows(data, value_input_option="RAW")
+        worksheet.append_rows(data, value_input_option="USER_ENTERED")
+        _apply_formatting(worksheet, len(transactions)) 
         
         return {
             "sheet_url": spreadsheet.url,
@@ -245,3 +252,57 @@ def sync_month(month: str, transactions: list[dict]) -> dict:
         raise e
     except Exception as e:
         raise RuntimeError(f"Error syncing to Google Sheets: {str(e)}")
+
+def _apply_formatting(worksheet, num_rows: int):
+    total_rows = num_rows + 1
+    last_col = "F"
+
+    with batch_updater(worksheet.spreadsheet) as batch:
+
+        # Arial 12 on all cells
+        batch.format_cell_range(worksheet, f"A1:{last_col}{total_rows}", CellFormat(
+            textFormat=TextFormat(fontFamily="Arial", fontSize=12)
+        ))
+
+        # Bold on header row
+        batch.format_cell_range(worksheet, f"A1:{last_col}1", CellFormat(
+            textFormat=TextFormat(fontFamily="Arial", fontSize=12, bold=True)
+        ))
+
+        if num_rows > 0:
+            # Transaction Date (A) and Post Date (B): M/D/YYYY
+            for col in ["A", "B"]:
+                batch.format_cell_range(worksheet, f"{col}2:{col}{total_rows}", CellFormat(
+                    numberFormat=NumberFormat(type="DATE", pattern="M/D/YYYY")
+                ))
+
+            # Description (C), Category (D), Source (E): plain text
+            # for col in ["C", "D", "E"]:
+            #     batch.format_cell_range(worksheet, f"{col}2:{col}{total_rows}", CellFormat(
+            #         numberFormat=NumberFormat(type="TEXT")
+            #     ))
+
+            # Amount (F): Accounting format
+            batch.format_cell_range(worksheet, f"F2:F{total_rows}", CellFormat(
+                numberFormat=NumberFormat(
+                    type="NUMBER",
+                    pattern='_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+                )
+            ))
+
+    # Auto-resize all columns to fit content
+    worksheet.spreadsheet.batch_update({
+        "requests": [{
+            "autoResizeDimensions": {
+                "dimensions": {
+                    "sheetId": worksheet.id,
+                    "dimension": "COLUMNS",
+                    "startIndex": 0,
+                    "endIndex": len(HEADERS)
+                }
+            }
+        }]
+    })
+
+    # Freeze header row
+    set_frozen(worksheet, rows=1)
