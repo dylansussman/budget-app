@@ -4,12 +4,18 @@ from pathlib import Path
 import gspread
 from google.oauth2.service_account import Credentials
 import statistics
+from gspread_formatting import (
+    format_cell_range,
+    CellFormat, TextFormat, Color,
+    NumberFormat, set_column_width, set_frozen,
+    batch_updater
+)
 
 # Scope required for Google Sheets API
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 # Column headers as per spec
-HEADERS = ["Transaction Date", "Post Date", "Description", "Source", "Amount"]
+HEADERS = ["Transaction Date", "Post Date", "Description", "Category", "Source", "Amount"]
 
 # Month names for tab naming
 MONTH_NAMES = [
@@ -159,13 +165,13 @@ def write_rolling_summary(month_summaries: dict) -> dict:
 
 def _format_month_tab(month: str) -> str:
     """
-    Convert month string from "YYYY-MM" format to tab name format "Jan 2025".
+    Convert month string from "YYYY-MM" format to tab name format "January 2025".
     
     Args:
         month: Month in format "YYYY-MM"
         
     Returns:
-        Formatted tab name like "Jan 2025"
+        Formatted tab name like "January 2025"
     """
     date_obj = datetime.strptime(month, "%Y-%m")
     month_name = MONTH_NAMES[date_obj.month - 1]
@@ -227,13 +233,15 @@ def sync_month(month: str, transactions: list[dict]) -> dict:
                 str(txn.get("transactionDate", "")),
                 str(txn.get("postDate", "")),
                 str(txn.get("description", "")),
-                str(f"{txn.get('source', '')} {txn.get('account', '')}".strip()),
+                str(txn.get("category", "")),
+                str(f"{txn.get('source', '')}" + (f" {txn.get('account', '').strip()}" if txn.get('account') is not None else "")),
                 str(txn.get("amount", "")),
             ]
             data.append(row)
         
         # Write all data at once
-        worksheet.append_rows(data, value_input_option="RAW")
+        worksheet.append_rows(data, value_input_option="USER_ENTERED")
+        _apply_formatting(worksheet, len(transactions)) 
         
         return {
             "sheet_url": spreadsheet.url,
@@ -244,3 +252,51 @@ def sync_month(month: str, transactions: list[dict]) -> dict:
         raise e
     except Exception as e:
         raise RuntimeError(f"Error syncing to Google Sheets: {str(e)}")
+
+def _apply_formatting(worksheet, num_rows: int):
+    total_rows = num_rows + 1
+    last_col = "F"
+
+    with batch_updater(worksheet.spreadsheet) as batch:
+
+        # Arial 12 on all cells
+        batch.format_cell_range(worksheet, f"A1:{last_col}{total_rows}", CellFormat(
+            textFormat=TextFormat(fontFamily="Arial", fontSize=12)
+        ))
+
+        # Bold on header row
+        batch.format_cell_range(worksheet, f"A1:{last_col}1", CellFormat(
+            textFormat=TextFormat(fontFamily="Arial", fontSize=12, bold=True)
+        ))
+
+        if num_rows > 0:
+            # Transaction Date (A) and Post Date (B): M/D/YYYY
+            for col in ["A", "B"]:
+                batch.format_cell_range(worksheet, f"{col}2:{col}{total_rows}", CellFormat(
+                    numberFormat=NumberFormat(type="DATE", pattern="M/D/YYYY")
+                ))
+
+            # Amount (F): Accounting format
+            batch.format_cell_range(worksheet, f"F2:F{total_rows}", CellFormat(
+                numberFormat=NumberFormat(
+                    type="NUMBER",
+                    pattern='_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+                )
+            ))
+
+    # Auto-resize all columns to fit content
+    worksheet.spreadsheet.batch_update({
+        "requests": [{
+            "autoResizeDimensions": {
+                "dimensions": {
+                    "sheetId": worksheet.id,
+                    "dimension": "COLUMNS",
+                    "startIndex": 0,
+                    "endIndex": len(HEADERS)
+                }
+            }
+        }]
+    })
+
+    # Freeze header row
+    set_frozen(worksheet, rows=1)

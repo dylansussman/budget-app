@@ -119,26 +119,17 @@ const monthSelect = document.getElementById('monthSelect');
 
 async function loadMonths() {
     try {
-        const now = new Date();
-        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-        // Fetch distinct months from the backend
         const response = await fetch('/api/transactions/months');
         if (!response.ok) throw new Error('Failed to fetch months');
         const months = await response.json();
 
-        // Ensure current month is always included even if no transactions yet
-        if (!months.includes(currentMonth)) {
-            months.unshift(currentMonth);
-        }
+        if (months.length === 0) return;
 
-        // Populate the dropdown
         monthSelect.innerHTML = months
             .map(m => `<option value="${m}">${m}</option>`)
             .join('');
 
-        // Default to current month if present, otherwise most recent
-        monthSelect.value = months.includes(currentMonth) ? currentMonth : months[0];
+        monthSelect.value = months[0]; // most recent month with transactions
 
         loadTransactions();
         loadSummary();
